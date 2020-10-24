@@ -1,6 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
+// import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, StatusBar } from 'react-native';
 import { MapView, Permissions } from 'expo-permissions';
 // import MapView from 'react-native-maps';
 
@@ -18,7 +18,7 @@ export default class App extends React.Component {
       const response = await Permissions.askAsync(Permissions.LOCATION)
     }
     navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude, longitude }}) => this.setState({ latitude, longitude}, () => console.log('State' , this.state)),
+      ({ coords: { latitude, longitude } }) => this.setState({ latitude, longitude}, () => console.log('State:' , this.state)),
       (error) => console.log('Error', error)
     )
   }
@@ -39,8 +39,8 @@ export default class App extends React.Component {
       );
     }
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Make shure you enable your location to use this application</Text>
+      <View style={styles.error_geoloc}>
+        <Text style={styles.error_geoloc_txt}>Make shure you enable your location to use this application</Text>
       </View>
     )
   }
@@ -51,11 +51,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'center'
   },
 
   map: {
     flex: 1
+  },
+
+  error_geoloc: {
+    flex: 1, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ECF0F1'
+  },
+
+  error_geoloc_txt: {
+    color: 'black'
   }
 });
 
@@ -64,7 +75,7 @@ const styles = StyleSheet.create({
 // import { StatusBar } from 'expo-status-bar';
 // import React from 'react';
 // import { StyleSheet, Text, View } from 'react-native';
-// import { MApView, Permissions } from 'expo';
+// // import { MapView, Permissions } from 'expo';
 // import MapView from 'react-native-maps';
 
 // export default class App extends React.Component {
