@@ -1,8 +1,14 @@
 // import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { Platform, Alert, Linking } from 'react-native';
 import { StyleSheet, Text, View, StatusBar } from 'react-native';
-import { MapView, Permissions } from 'expo-permissions';
+import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
+import {PERMISSIONS} from 'react-native-permissions';
+import { checkMultiplePermissions } from './services/permissions'
+//import { MapView, Permissions } from 'expo-permissions';
 // import MapView from 'react-native-maps';
+
+navigator.geolocation = require('@react-native-community/geolocation');
 
 export default class App extends React.Component {
   state = {
@@ -10,28 +16,72 @@ export default class App extends React.Component {
     longitude: null
   }
 
-  async componentDidMount() {
-    const { status } = await  Permissions.getAsync(Permissions.LOCATION)
-  
+  // Requesting for the Location permission
+  static async checkForPermissions() {
+    const permissions =
+      Platform.OS === 'ios'
+        ? [PERMISSIONS.IOS.LOCATION_WHEN_IN_USE]
+        : [PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION, PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION];
 
-    if (status != 'granted' ) {
-      const response = await Permissions.askAsync(Permissions.LOCATION)
+    // Call our permission service and check for permissions
+    const isPermissionGranted = await checkMultiplePermissions(permissions);
+    if (!isPermissionGranted) {
+      // Show an alert in case permission was not granted
+      Alert.alert(
+        'Permission Request',
+        'Please allow permission to access the location.',
+        [
+          {
+            text: 'Go to Settings',
+            onPress: () => {
+              Linking.openSettings();
+            },
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+        ],
+        { cancelable: false },
+      );
     }
-    navigator.geolocation.getCurrentPosition(
-      ({ coords: { latitude, longitude } }) => this.setState({ latitude, longitude}, () => console.log('State:' , this.state)),
-      (error) => console.log('Error', error)
-    )
+    return isPermissionGranted;
   }
 
+  async componentDidMount() {
+    
+  }
+
+  
+
   render() {
+    if(App.checkForPermissions()){
+      console.log('permissions ok');
+      navigator.geolocation.watchPosition(
+        ({ coords: { latitude, longitude } }) => {
+          this.setState({ latitude, longitude});
+          console.log('State:' , this.state);
+        },
+        (error) => console.log('Error', error),
+        {
+          enableHighAccuracy: true, timeout: 5000
+        }
+      )
+    }
+    console.log('Helo');
     const { latitude, longitude } = this.state
     if (latitude) {
       return (
         <MapView style={styles.map}
+          showsMyLocationButton={true}
+          showsUserLocation={true}
+          followsUserLocation={true}
+          loadingEnabled
+          provider={PROVIDER_GOOGLE}
           initialRegion={{
             latitude,
             longitude,
-            latitudeDelta:  0.0922,
+            latitudeDelta: 0.0922,
             longitudeDelta: 0.0421
           }}
         >
@@ -40,7 +90,7 @@ export default class App extends React.Component {
     }
     return (
       <View style={styles.error_geoloc}>
-        <Text style={styles.error_geoloc_txt}>Make shure you enable your location to use this application</Text>
+        <Text style={styles.error_geoloc_txt}>Make sure you enabled your location to use this application</Text>
       </View>
     )
   }
@@ -59,7 +109,7 @@ const styles = StyleSheet.create({
   },
 
   error_geoloc: {
-    flex: 1, 
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ECF0F1'
